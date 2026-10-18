@@ -45,6 +45,12 @@ const ADMIN_ROUTES = new Set([
 
 /** Routes a shared link (`?key=`) is allowed to reach, i.e. `@Authenticated({ sharedLink: true })` */
 const SHARED_LINK_ROUTES = new Set([
+  'DELETE uploads/chunked/:id',
+  'GET uploads/chunked',
+  'GET uploads/chunked/:id',
+  'POST uploads/chunked',
+  'POST uploads/chunked/:id/complete',
+  'PUT uploads/chunked/:id',
   'DELETE assets/:id/video/stream/:sessionId',
   'GET albums/:id',
   'GET albums/:id/map-markers',
