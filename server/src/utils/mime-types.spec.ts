@@ -1,3 +1,4 @@
+import { AssetType } from 'src/enum.js';
 import { mimeTypes } from 'src/utils/mime-types.js';
 
 describe('mimeTypes', () => {
@@ -81,6 +82,7 @@ describe('mimeTypes', () => {
     { mimetype: 'application/mxf', extension: '.mxf' },
     { mimetype: 'video/3gpp', extension: '.3gp' },
     { mimetype: 'video/3gpp', extension: '.3gpp' },
+    { mimetype: 'video/3gpp', extension: '.sdv' },
     { mimetype: 'video/avi', extension: '.avi' },
     { mimetype: 'video/mp2t', extension: '.m2t' },
     { mimetype: 'video/mp2t', extension: '.m2ts' },
@@ -204,6 +206,15 @@ describe('mimeTypes', () => {
   });
 
   describe('video', () => {
+    it.each(['movie.sdv', 'MOVIE.SDV', 'Movie.Sdv'])('recognizes legacy phone video %s', (filename) => {
+      expect(mimeTypes.isAsset(filename)).toBe(true);
+      expect(mimeTypes.isVideo(filename)).toBe(true);
+      expect(mimeTypes.assetType(filename)).toBe(AssetType.Video);
+      expect(mimeTypes.lookup(filename)).toBe('video/3gpp');
+      expect(mimeTypes.getSupportedFileExtensions()).toContain('.sdv');
+      expect(mimeTypes.toExtension('video/3gpp')).toBe('.3gp');
+    });
+
     it('should contain only lowercase mime types', () => {
       const keys = Object.keys(mimeTypes.video);
       expect(keys).toEqual(keys.map((mimeType) => mimeType.toLowerCase()));

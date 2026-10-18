@@ -71,6 +71,29 @@ describe('fileUploader error handling', () => {
     expect(items[0].state).toBe(UploadState.STARTED);
   });
 
+  it.each(['', 'application/octet-stream', 'video/3gpp'])(
+    'uploads uppercase SDV files using server extensions with MIME type "%s"',
+    async (type) => {
+      vi.mocked(uploadManager.getExtensions).mockRestore();
+      const previous = uploadManager.mediaTypes;
+      uploadManager.mediaTypes = { image: [], sidecar: [], video: ['.sdv'] };
+      try {
+        const file = new File(['legacy phone video'], 'MOVIE.SDV', { type });
+        const upload = vi.spyOn(utils, 'uploadRequest').mockResolvedValue({ status: 201, data: mockUploadResponse });
+        await fileUploadHandler({ files: [file] });
+        expect(get(uploadAssetsStore)[0].state).toBe(UploadState.DONE);
+        expect(upload).toHaveBeenCalledOnce();
+        expect(upload.mock.calls[0][0].data).toBeInstanceOf(FormData);
+        expect((upload.mock.calls[0][0].data as FormData).get('assetData')).toMatchObject({
+          name: 'MOVIE.SDV',
+          size: file.size,
+        });
+      } finally {
+        uploadManager.mediaTypes = previous;
+      }
+    },
+  );
+
   describe('chunked upload integration', () => {
     const largeFile = new File([new Uint8Array(chunkedUpload.CHUNKED_UPLOAD_THRESHOLD + 1)], 'large.jpg');
 

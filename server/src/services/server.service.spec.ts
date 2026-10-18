@@ -15,6 +15,10 @@ describe(ServerService.name, () => {
     expect(sut).toBeDefined();
   });
 
+  it('advertises SDV videos to the Web file picker and upload filter', () => {
+    expect(sut.getSupportedMediaTypes().video).toContain('.sdv');
+  });
+
   describe('getStorage', () => {
     it('should return the disk space as B', async () => {
       mocks.storage.checkDiskUsage.mockResolvedValue({ free: 200, available: 300, total: 500 });
