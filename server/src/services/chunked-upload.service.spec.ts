@@ -152,6 +152,16 @@ describe(ChunkedUploadService.name, () => {
     expect(media.uploadAsset).not.toHaveBeenCalled();
   });
 
+  it('overwrites bytes left by a worker that stopped before committing its offset', async () => {
+    const session = await create();
+    vi.spyOn(repository, 'save').mockRejectedValueOnce(new Error('worker stopped before metadata commit'));
+    await expect(service.write(auth, session.id, 0, Readable.from([contents]))).rejects.toThrow('worker stopped');
+    expect(await service.get(auth, session.id)).toMatchObject({ offset: 0 });
+    await service.write(auth, session.id, 0, Readable.from([contents]));
+    await service.complete(auth, session.id);
+    expect(await readFile(media.uploadAsset.mock.calls[0][2].originalPath)).toEqual(contents);
+  });
+
   it('isolates users and shared links, even links belonging to the same owner', async () => {
     const session = await create();
     await expect(service.get(factory.auth(), session.id)).rejects.toBeInstanceOf(NotFoundException);

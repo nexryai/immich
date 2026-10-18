@@ -11,6 +11,7 @@ env:
 jobs:
   checks:
     name: Docs Deploy Checks
+    if: ${{ github.repository == 'immich-app/immich' }}
     runs-on: ubuntu-latest
     permissions:
       actions: read

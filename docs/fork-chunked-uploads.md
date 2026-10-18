@@ -18,20 +18,20 @@ Resumption covers transient connection failures during the current Web upload. A
 
 All routes require upstream authentication and `asset.upload` API key permission. Shared links must allow uploads and pass their normal key/slug credentials on every request. Sessions belong to one user and, if applicable, one shared link; another link belonging to the same user cannot access them. These fork-private endpoints are excluded from upstream-generated OpenAPI and mobile SDK files.
 
-| Method and path | Request | Response |
-| --- | --- | --- |
-| `GET /api/uploads/chunked` | None | `{ version: 1, chunkSize: 8388608 }` |
-| `POST /api/uploads/chunked` | JSON: `filename`, positive integer `size`, ISO `fileCreatedAt` and `fileModifiedAt`; optional hexadecimal SHA-1 `checksum`, boolean `isFavorite`, `visibility` | HTTP 201: `{ id, offset: 0, chunkSize }` |
-| `GET /api/uploads/chunked/:id` | None | `{ id, offset, chunkSize }` |
-| `PUT /api/uploads/chunked/:id?offset=N` | Raw bytes, `Content-Type: application/octet-stream` | `{ id, offset, chunkSize }` with the new committed offset |
-| `POST /api/uploads/chunked/:id/complete` | None | HTTP 200: upstream asset upload response, including created/duplicate status |
-| `DELETE /api/uploads/chunked/:id` | None | HTTP 204 |
+| Method and path                          | Request                                                                                                                                                        | Response                                                                     |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `GET /api/uploads/chunked`               | None                                                                                                                                                           | `{ version: 1, chunkSize: 8388608 }`                                         |
+| `POST /api/uploads/chunked`              | JSON: `filename`, positive integer `size`, ISO `fileCreatedAt` and `fileModifiedAt`; optional hexadecimal SHA-1 `checksum`, boolean `isFavorite`, `visibility` | HTTP 201: `{ id, offset: 0, chunkSize }`                                     |
+| `GET /api/uploads/chunked/:id`           | None                                                                                                                                                           | `{ id, offset, chunkSize }`                                                  |
+| `PUT /api/uploads/chunked/:id?offset=N`  | Raw bytes, `Content-Type: application/octet-stream`                                                                                                            | `{ id, offset, chunkSize }` with the new committed offset                    |
+| `POST /api/uploads/chunked/:id/complete` | None                                                                                                                                                           | HTTP 200: upstream asset upload response, including created/duplicate status |
+| `DELETE /api/uploads/chunked/:id`        | None                                                                                                                                                           | HTTP 204                                                                     |
 
 Chunks must match the advertised size, except the final chunk, which must match the remaining file length. Invalid offsets, concurrent operations, and incomplete finalization return HTTP 409. Expired sessions return HTTP 410 when accessed before cleanup, then HTTP 404. Partial or oversized chunks do not advance the committed offset. The server streams to a staging file, commits bytes and metadata, computes the final SHA-1, checks any supplied checksum, and passes the assembled file to the upstream asset upload service. Original filenames never determine session paths.
 
 ## Validation and upstream updates
 
-The fork workflow `.github/workflows/fork-chunked-upload.yml` uses the repository token and needs no upstream organization secrets. It checks the server and Web types, upload regressions, and fork formatting/lint. The upstream workflows currently reference Immich organization secrets and may need separate configuration in a fork; inspect those failures independently.
+The fork workflow `.github/workflows/fork-chunked-upload.yml` uses the repository token and needs no upstream organization secrets. It checks server and Web types, all unit tests, concurrent-worker locking against PostgreSQL, production builds, unchanged upstream OpenAPI generation, and fork formatting/lint. Upstream container publishing and documentation deployment run only in `immich-app/immich`: those workflows assume existing registry images, organization runners, and upstream infrastructure. Publishing this fork's containers requires a separate workflow configured for the fork's registry and runners. Other upstream validation workflows remain enabled.
 
 Follow the upstream merge and commit/push/CI policy in the root `AGENTS.md`. For local verification, install with the committed lockfile, build `@immich/sdk` and `@immich/plugin-sdk`, and run:
 
@@ -40,6 +40,13 @@ pnpm --filter immich check
 pnpm --filter immich exec vitest --config test/vitest.config.mjs --run
 pnpm --filter immich-web check:typescript
 pnpm --filter immich-web exec vitest run
+```
+
+Run the additional PostgreSQL integration suite with a disposable test database:
+
+```sh
+FORK_TEST_DB_URL=postgres://postgres:password@localhost:5432/postgres \
+  pnpm --filter immich exec vitest --config test/vitest.config.fork.mjs --run
 ```
 
 Before deploying an upstream merge, exercise large Web uploads through the deployment's actual proxy and storage, shared-link uploads, and a normal mobile backup. Keep the original upload controller, DTOs, OpenAPI, and SDK behavior compatible.

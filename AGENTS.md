@@ -25,4 +25,5 @@
 - Push each completed increment to the fork. Never force-push published history or include unrelated local changes.
 - Inspect the CI runs for the pushed commit SHA. Follow failures to their logs, fix failures caused by the change, commit and push the fixes, and inspect the replacement runs.
 - Provide fork-owned CI that runs without upstream organization secrets. Do not mistake a missing or skipped workflow for successful validation.
+- Keep upstream-only container publishing and documentation deployment scoped to the upstream repository. Maintain independent fork validation; configure fork publication explicitly when needed.
 - Finish only after checking the final pushed revision, reporting the commit, CI results, and any checks that could not run with their concrete cause.

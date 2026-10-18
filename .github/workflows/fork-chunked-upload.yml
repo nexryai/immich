@@ -16,6 +16,18 @@ concurrency:
 jobs:
   upload-regressions:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.3
+        env:
+          POSTGRES_PASSWORD: chunked-test-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -30,11 +42,23 @@ jobs:
       - run: pnpm --filter @immich/plugin-sdk build
       - run: pnpm --filter immich check
       - run: pnpm --filter immich exec vitest --config test/vitest.config.mjs --run --maxWorkers=2
+      - name: Verify concurrent workers against PostgreSQL
+        run: pnpm --filter immich exec vitest --config test/vitest.config.fork.mjs --run
+        env:
+          FORK_TEST_DB_URL: postgres://postgres:chunked-test-only@localhost:5432/postgres
+      - name: Build server and verify upstream OpenAPI is unchanged
+        run: |
+          pnpm --filter immich build
+          pnpm --filter immich exec node dist/bin/sync-open-api.js
+          git diff --exit-code -- open-api packages/sdk mobile/generated
       - run: pnpm --filter immich-web check:typescript
       - run: pnpm --filter immich-web exec vitest run --maxWorkers=2
+      - run: pnpm --filter immich-web build
       - name: Check fork formatting and lint
         run: |
           pnpm --filter immich exec prettier --check src/controllers/chunked-upload.controller.ts src/dtos/chunked-upload.dto.ts src/repositories/chunked-upload.repository.ts src/services/chunked-upload.service.ts src/services/chunked-upload.service.spec.ts
           pnpm --filter immich exec eslint src/controllers/chunked-upload.controller.ts src/dtos/chunked-upload.dto.ts src/repositories/chunked-upload.repository.ts src/services/chunked-upload.service.ts src/services/chunked-upload.service.spec.ts
+          pnpm --filter immich exec prettier --check test/vitest.config.fork.mjs test/fork/chunked-upload-locks.spec.ts
+          pnpm --filter immich exec eslint test/fork/chunked-upload-locks.spec.ts
           pnpm --filter immich-web exec prettier --check src/lib/utils/chunked-upload.ts src/lib/utils/chunked-upload.spec.ts src/lib/utils/upload-request.spec.ts src/lib/utils/file-uploader.ts src/lib/utils/file-uploader.spec.ts src/lib/utils.ts
           pnpm --filter immich-web exec eslint src/lib/utils/chunked-upload.ts src/lib/utils/chunked-upload.spec.ts src/lib/utils/upload-request.spec.ts src/lib/utils/file-uploader.ts src/lib/utils/file-uploader.spec.ts src/lib/utils.ts
