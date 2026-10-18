@@ -31,7 +31,11 @@ Chunks must match the advertised size, except the final chunk, which must match 
 
 ## Validation and upstream updates
 
-The fork workflow `.github/workflows/fork-chunked-upload.yml` uses the repository token and needs no upstream organization secrets. It checks server and Web types, all unit tests, concurrent-worker locking against PostgreSQL, production builds, unchanged upstream OpenAPI generation, and fork formatting/lint. Upstream container publishing and documentation deployment run only in `immich-app/immich`: those workflows assume existing registry images, organization runners, and upstream infrastructure. Publishing this fork's containers requires a separate workflow configured for the fork's registry and runners. Other upstream validation workflows remain enabled.
+The fork workflow `.github/workflows/fork-chunked-upload.yml` uses the repository token and needs no upstream organization secrets. It checks server and Web types, all unit tests, concurrent-worker locking against PostgreSQL, production builds, unchanged upstream OpenAPI generation, and fork formatting/lint. Upstream container/CLI image publishing and documentation deployment run only in `immich-app/immich`. Other upstream validation workflows remain enabled.
+
+After fork validation succeeds on a push to `main` or a manual run on `main`, native amd64 and arm64 runners build `server/Dockerfile` and push untagged manifests to the server package. Only after both builds succeed does the workflow update **`ghcr.io/nexryai/immich-server:latest`** with their combined manifest. This is the fork's only published container tag; no ML or CLI images or registry cache tags are published. Pull requests run validation without publishing. Builds use GitHub Actions cache storage, and image metadata links back to this fork and its exact source commit.
+
+To deploy the published Web UI and server, set the server service's image to `ghcr.io/nexryai/immich-server:latest` in your Compose configuration, then pull and recreate that service. Continue using matching upstream database, Redis/Valkey, and machine-learning images. This fork's server and Web UI are packaged together.
 
 Follow the upstream merge and commit/push/CI policy in the root `AGENTS.md`. For local verification, install with the committed lockfile, build `@immich/sdk` and `@immich/plugin-sdk`, and run:
 

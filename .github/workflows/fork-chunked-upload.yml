@@ -62,3 +62,90 @@ jobs:
           pnpm --filter immich exec eslint test/fork/chunked-upload-locks.spec.ts
           pnpm --filter immich-web exec prettier --check src/lib/utils/chunked-upload.ts src/lib/utils/chunked-upload.spec.ts src/lib/utils/upload-request.spec.ts src/lib/utils/file-uploader.ts src/lib/utils/file-uploader.spec.ts src/lib/utils.ts
           pnpm --filter immich-web exec eslint src/lib/utils/chunked-upload.ts src/lib/utils/chunked-upload.spec.ts src/lib/utils/upload-request.spec.ts src/lib/utils/file-uploader.ts src/lib/utils/file-uploader.spec.ts src/lib/utils.ts
+
+  build-server-image:
+    name: Build server (${{ matrix.arch }})
+    needs: upload-regressions
+    if: ${{ github.repository == 'nexryai/immich' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push server by digest
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: server/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          outputs: type=image,name=ghcr.io/nexryai/immich-server,push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=fork-server-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=fork-server-${{ matrix.arch }}
+          build-args: |
+            BUILD_ID=${{ github.run_id }}
+            BUILD_IMAGE=ghcr.io/nexryai/immich-server:latest
+            BUILD_REPOSITORY=nexryai/immich
+            BUILD_SOURCE_REF=${{ github.ref }}
+            BUILD_SOURCE_COMMIT=${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/nexryai/immich
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Export image digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fork-server-digest-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-server-image:
+    name: Publish server latest
+    needs: build-server-image
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: fork-server-digest-*
+          path: ${{ runner.temp }}/digests
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish the single latest tag
+        shell: bash
+        run: |
+          images=()
+          for digest in "$RUNNER_TEMP"/digests/*; do
+            images+=("ghcr.io/nexryai/immich-server@sha256:${digest##*/}")
+          done
+          test "${#images[@]}" -eq 2
+          docker buildx imagetools create --tag ghcr.io/nexryai/immich-server:latest "${images[@]}"
+          docker buildx imagetools inspect ghcr.io/nexryai/immich-server:latest
