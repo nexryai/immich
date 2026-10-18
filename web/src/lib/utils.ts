@@ -55,8 +55,11 @@ export const initLanguage = async () => {
 
 interface UploadRequestOptions {
   url: string;
-  method?: 'POST' | 'PUT';
-  data: FormData;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  data?: FormData | Blob | string;
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+  timeout?: number;
   onUploadProgress?: (event: ProgressEvent<XMLHttpRequestEventTarget>) => void;
 }
 
@@ -64,7 +67,7 @@ export class AbortError extends Error {
   override name = 'AbortError';
 }
 
-class ApiError extends Error {
+export class ApiError extends Error {
   override name = 'ApiError';
 
   constructor(
@@ -83,7 +86,7 @@ export const sleep = (ms: number) => {
 let unsubscribeId = 0;
 const uploads: Record<number, () => void> = {};
 
-const trackUpload = (unsubscribe: () => void) => {
+export const trackUpload = (unsubscribe: () => void) => {
   const id = unsubscribeId++;
   uploads[id] = unsubscribe;
   return () => {
@@ -101,7 +104,29 @@ export const uploadRequest = async <T>(options: UploadRequestOptions): Promise<{
   const { onUploadProgress: onProgress, data, url } = options;
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    const unsubscribe = trackUpload(() => xhr.abort());
+    const abort = () => xhr.abort();
+    const untrack = trackUpload(abort);
+    const unsubscribe = () => {
+      untrack();
+      options.signal?.removeEventListener('abort', abort);
+    };
+
+    if (options.signal?.aborted) {
+      unsubscribe();
+      reject(new AbortError());
+      return;
+    }
+    options.signal?.addEventListener('abort', abort, { once: true });
+
+    xhr.addEventListener('abort', () => {
+      unsubscribe();
+      reject(new AbortError());
+    });
+
+    xhr.addEventListener('timeout', () => {
+      unsubscribe();
+      reject(new ApiError('Upload request timed out', 408, ''));
+    });
 
     xhr.addEventListener('error', (error) => {
       unsubscribe();
@@ -122,6 +147,10 @@ export const uploadRequest = async <T>(options: UploadRequestOptions): Promise<{
     }
 
     xhr.open(options.method || 'POST', url);
+    xhr.timeout = options.timeout ?? 0;
+    for (const [name, value] of Object.entries(options.headers ?? {})) {
+      xhr.setRequestHeader(name, value);
+    }
     xhr.responseType = 'json';
     xhr.send(data);
   });
