@@ -6,6 +6,16 @@ The Web client first discovers the fork protocol. Only HTTP 404, 405, or 501 dur
 
 ## Deployment
 
+### Legacy SDV phone videos
+
+This fork accepts `.sdv` (including uppercase `.SDV`) as `video/3gpp` for legacy phone recordings containing 3GPP-compatible video. The server advertises the extension to the Web file picker and drag-and-drop upload filter. Uploads also work when the browser reports an empty or generic MIME type. Both multipart and chunked uploads use the same server format registry; existing API schemas and mobile upload behavior remain compatible.
+
+The original file is preserved. Metadata extraction, thumbnails, and playback conversion use the existing video processing jobs and FFmpeg settings. Keep video transcoding enabled (for example, the default policy) to convert older codecs such as H.263 for browser playback, and allow the queued jobs to finish. There is no need to rename files to `.3gp` or convert them before uploading. Reload the Web UI after deploying the updated server so it fetches the new extension list.
+
+Validation includes server format/asset classification and upload acceptance tests, server extension discovery, and Web uploads of uppercase `.SDV` with empty, generic, and 3GPP MIME types. A generated 176x144 H.263/AAC 3GPP sample named `MOVIE.SDV` was also successfully probed and converted to H.264/AAC MP4 using the pinned production base image's FFmpeg. This synthetic sample does not verify every handset variant; malformed recordings or different formats sharing the extension still depend on FFmpeg's ability to read their contents.
+
+### Server and proxy configuration
+
 Deploy this fork's server and Web UI together. API workers must share the same media/upload filesystem and PostgreSQL database. Temporary sessions are stored under `upload/.chunks/<user-id>/<session-id>` inside the configured media location. Session locks use PostgreSQL transaction advisory locks and are released automatically if a worker exits.
 
 Allow `GET`, `POST`, `PUT`, and `DELETE` requests under `/api/uploads/chunked`. Configure the reverse proxy to allow request bodies of at least 8 MiB and allow the standard `application/octet-stream` content type. Each chunk has a two-minute server timeout. Disable proxy caching for this authenticated path. Finalization hashes the complete file on disk, so its response timeout should accommodate large files on your storage.

@@ -9,6 +9,7 @@
 - Bound request sizes and memory use. Validate upload ownership, offsets, lengths, file types, and checksums. Handle retries, interrupted requests, concurrent workers, cancellation, and expiration of abandoned temporary files.
 - Preserve Web upload progress, duplicate reporting, locked asset visibility, and album assignment. Fall back to the original upload only when the server explicitly lacks the chunked upload capability, before starting a session.
 - Add focused regression tests for the new protocol and its Web integration, and continue running existing upload compatibility tests.
+- Keep legacy `.sdv` phone videos registered as `video/3gpp` in the shared server format registry. Let Web clients discover the extension through the existing supported-media endpoint and reuse upstream video processing; preserve original files and the configured transcoding policy when tracking upstream changes.
 
 ## Tracking upstream
 
