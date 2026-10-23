@@ -63,4 +63,8 @@ FORK_TEST_DB_URL=postgres://postgres:password@localhost:5432/postgres \
   pnpm --filter immich exec vitest --config test/vitest.config.fork.mjs --run
 ```
 
-Before deploying an upstream merge, exercise large Web uploads through the deployment's actual proxy and storage, shared-link uploads, and a normal mobile backup. Keep the original upload controller, DTOs, OpenAPI, and SDK behavior compatible.
+Before deploying an upstream merge, exercise large Web uploads through the deployment's actual proxy and storage, shared-link uploads, and a normal mobile backup. Keep fork-specific modifications compatible with the integrated upstream upload controller, DTOs, OpenAPI, and SDK. Upstream's own API changes are accepted as part of tracking upstream; this fork does not retain removed upstream APIs for older releases.
+
+### Upstream integration: 2026-10-23
+
+Merged upstream `main` at `1cf5bb41153478c180b65c6d93106fce5802b474`, including passkeys, upload permission checks, shared-link privacy fixes, storage symlink handling, and Web album query changes. The fork retains its private chunked upload protocol, SDV registration, and server-only `latest` publication. The upstream removal of the deprecated password field from `PUT /users/me` is accepted; clients should follow upstream's change-password endpoint. Fork CI reads the Node version from `.nvmrc` so it follows upstream toolchain updates.

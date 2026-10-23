@@ -3,7 +3,8 @@
 ## Compatibility and implementation
 
 - This fork adds chunked uploads to the Immich Web UI. Preserve compatibility with the unmodified upstream mobile applications and API clients.
-- Keep all existing API routes, request fields, response bodies, authentication rules, and status codes backward compatible. In particular, retain the existing multipart `POST /assets` upload unchanged.
+- Fork-specific changes must preserve the upstream API routes, request fields, response bodies, authentication rules, and status codes. In particular, do not change the upstream multipart `POST /assets` upload for the fork's chunked transport.
+- Accept upstream's own API and compatibility changes when integrating upstream. Do not restore APIs or behaviors that upstream removes solely to retain compatibility with older upstream versions; compatibility requirements here apply to fork-specific modifications relative to the integrated upstream revision.
 - Implement chunked uploads through separate, authenticated, fork-specific endpoints and an isolated Web transport. Keep these private endpoints out of generated upstream SDKs and OpenAPI documents; do not require mobile changes.
 - Reuse the existing asset upload service for final registration, including duplicate detection, quota checks, metadata extraction, shared-link association, and storage processing.
 - Bound request sizes and memory use. Validate upload ownership, offsets, lengths, file types, and checksums. Handle retries, interrupted requests, concurrent workers, cancellation, and expiration of abandoned temporary files.
@@ -17,7 +18,7 @@
 - Fetch upstream tags and branches regularly. Inspect release notes and changes to upload controllers/services, authentication, storage, Web uploading, and CI before integrating an upstream release.
 - Integrate a selected upstream release into a temporary integration branch using a merge, preserving published fork history. Resolve conflicts there, keeping fork changes in separate modules and minimizing edits to upstream files.
 - Run the server and Web checks, the chunked upload regression suite, and legacy upload tests. Verify ordinary mobile multipart uploads and shared-link uploads before updating the deployed fork.
-- Keep upstream-generated API/SDK files unchanged unless an upstream update requires regeneration. Review API changes for backward compatibility.
+- Keep upstream-generated API/SDK files unchanged unless an upstream update requires regeneration. Review API changes to distinguish upstream evolution from incompatibilities introduced by fork-specific code.
 - Record deployment constraints and protocol changes in `docs/fork-chunked-uploads.md`. Review upstream support for chunked uploads periodically and retire fork-specific code when a compatible upstream implementation is available.
 
 ## Commits, pushes, and CI
