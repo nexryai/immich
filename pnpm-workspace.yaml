@@ -34,6 +34,11 @@ overrides:
   # 1.9.3-1.9.5 are confirmed broken
   tsc-alias: 1.9.7
 packageExtensions:
+  # tscompat imports the JS compiler API without declaring TypeScript itself.
+  # Keep it on the same TS6 API as typescript-eslint, not the hoisted TS7 CLI.
+  '@koddsson/eslint-plugin-tscompat@0.2.0':
+    dependencies:
+      typescript: 'npm:@typescript/typescript6@6.0.2'
   nestjs-kysely:
     dependencies:
       tslib: '*'
