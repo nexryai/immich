@@ -39,6 +39,13 @@ packageExtensions:
   '@koddsson/eslint-plugin-tscompat@0.2.0':
     dependencies:
       typescript: 'npm:@typescript/typescript6@6.0.2'
+  # Svelte's parser also resolves the compiler from ESLint's package location.
+  'eslint@10':
+    dependencies:
+      typescript: 'npm:@typescript/typescript6@6.0.2'
+  'svelte-eslint-parser@1':
+    dependencies:
+      typescript: 'npm:@typescript/typescript6@6.0.2'
   nestjs-kysely:
     dependencies:
       tslib: '*'
