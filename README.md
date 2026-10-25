@@ -50,6 +50,10 @@
 > [!NOTE]
 > You can find the main documentation, including installation guides, at https://immich.app/.
 
+## About this fork
+
+This fork adds chunked Web uploads and support for legacy `.SDV` phone videos while keeping fork-specific changes compatible with upstream clients. The server and Web UI are published together as `ghcr.io/nexryai/immich-server:latest` for Linux amd64 and arm64. See the [fork deployment and upload guide](docs/fork-chunked-uploads.md) for setup, limitations, and upstream integration notes.
+
 ## Links
 
 - [Documentation](https://docs.immich.app/)
