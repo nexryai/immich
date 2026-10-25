@@ -68,3 +68,7 @@ Before deploying an upstream merge, exercise large Web uploads through the deplo
 ### Upstream integration: 2026-10-23
 
 Merged upstream `main` at `1cf5bb41153478c180b65c6d93106fce5802b474`, including passkeys, upload permission checks, shared-link privacy fixes, storage symlink handling, and Web album query changes. The fork retains its private chunked upload protocol, SDV registration, and server-only `latest` publication. The upstream removal of the deprecated password field from `PUT /users/me` is accepted; clients should follow upstream's change-password endpoint. Fork CI reads the Node version from `.nvmrc` so it follows upstream toolchain updates.
+
+### Upstream integration: 2026-10-25
+
+Merged upstream `main` at `256eb55dbe92ac77e02794442f9487e88ffed2b1`, including Web API key/passkey/session query refactoring, more efficient recently-added timeline buckets, mobile JPEG XL decoding and request cancellation fixes, and machine-learning dependency updates. No fork upload, SDV, or publication changes were needed. The fork still publishes only the server `latest` image; upstream machine-learning changes do not add a fork ML image.
