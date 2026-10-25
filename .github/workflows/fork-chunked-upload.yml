@@ -61,7 +61,7 @@ jobs:
           pnpm --filter immich exec prettier --check test/vitest.config.fork.mjs test/fork/chunked-upload-locks.spec.ts
           pnpm --filter immich exec eslint test/fork/chunked-upload-locks.spec.ts
           pnpm --filter immich-web exec prettier --check src/lib/utils/chunked-upload.ts src/lib/utils/chunked-upload.spec.ts src/lib/utils/upload-request.spec.ts src/lib/utils/file-uploader.ts src/lib/utils/file-uploader.spec.ts src/lib/utils.ts
-          pnpm --filter immich-web exec eslint src/lib/utils/chunked-upload.ts src/lib/utils/chunked-upload.spec.ts src/lib/utils/upload-request.spec.ts src/lib/utils/file-uploader.ts src/lib/utils/file-uploader.spec.ts src/lib/utils.ts
+          pnpm --filter immich-web exec eslint . --max-warnings 0 --concurrency 2
 
   build-server-image:
     name: Build server (${{ matrix.arch }})
