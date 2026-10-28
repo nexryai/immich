@@ -12,6 +12,12 @@
 - Add focused regression tests for the new protocol and its Web integration, and continue running existing upload compatibility tests.
 - Keep legacy `.sdv` phone videos registered as `video/3gpp` in the shared server format registry. Let Web clients discover the extension through the existing supported-media endpoint and reuse upstream video processing; preserve original files and the configured transcoding policy when tracking upstream changes.
 
+## Fork version naming
+
+- Name fork server/Web releases `<upstream-version>-chunked` (for example, `v3.3.5-chunked` in the UI and `3.3.5-chunked` in package manifests). Keep root, server, and Web package versions aligned.
+- On each upstream integration, update the base version to the upstream version being tracked and retain the `-chunked` suffix. Record the exact upstream commit separately; the version label does not imply a build uses only the tagged release code.
+- Version labels do not create additional container tags: continue publishing only `ghcr.io/nexryai/immich-server:latest`.
+
 ## Tracking upstream
 
 - Keep `origin` pointing to this fork and add `upstream` as `https://github.com/immich-app/immich.git` when needed.
