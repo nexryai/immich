@@ -8,7 +8,7 @@ After browsing photos for several minutes, navigating to another photo can fail 
 Error: server/config must be loaded first
 ```
 
-This was observed in a fork based on upstream main at `256eb55dbe92ac77e02794442f9487e88ffed2b1`. The relevant configuration initialization and query-cache code matches upstream. The fork also contains independent upload changes. This report has not been reproduced against a separately deployed, unmodified upstream installation.
+The affected code is present in upstream main at `256eb55dbe92ac77e02794442f9487e88ffed2b1`. The cache-expiration behavior was reproduced with Query Core 5.104.3 and a memoized initializer using fake timers, as described below.
 
 ## Reproduction
 
