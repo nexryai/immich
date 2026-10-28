@@ -8,7 +8,13 @@ After browsing photos for several minutes, navigating to another photo can fail 
 Error: server/config must be loaded first
 ```
 
-The affected code is present in upstream main at `256eb55dbe92ac77e02794442f9487e88ffed2b1`. The cache-expiration behavior was reproduced with Query Core 5.104.3 and a memoized initializer using fake timers, as described below.
+## Version clarification
+
+**Version: a build containing upstream main at `256eb55dbe92ac77e02794442f9487e88ffed2b1`, not the official v3.3.5 release.**
+
+The earlier v3.3.5 version information was incorrect. The official v3.3.5 release does not contain this configuration-query implementation, and this issue has not been reproduced on that release. The analysis below concerns the unreleased code at the specified main commit.
+
+The cache-expiration behavior was reproduced with Query Core 5.104.3 and a memoized initializer using fake timers, as described below.
 
 ## Reproduction
 
@@ -47,3 +53,7 @@ client.setQueryDefaults(['config'], { gcTime: Infinity });
 Keep explicit invalidation/refetch behavior and the existing logout removal of private user/admin configuration. Ordinary asset/album queries should retain normal garbage collection.
 
 Regression coverage should verify reads after more than five minutes without observers, normal collection of unrelated queries, and removal of private configuration on logout.
+
+## Reply correcting the original version information
+
+You're right—the version information in my report was incorrect. This was observed on a build containing upstream main at `256eb55dbe92ac77e02794442f9487e88ffed2b1`, not the official v3.3.5 release. My analysis refers to the configuration-query code at that commit. I have not reproduced this on the v3.3.5 release. Sorry for the confusion.
