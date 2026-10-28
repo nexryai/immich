@@ -16,6 +16,7 @@
 
 - Name fork server/Web releases `<upstream-version>-chunked` (for example, `v3.3.5-chunked` in the UI and `3.3.5-chunked` in package manifests). Keep root, server, and Web package versions aligned.
 - On each upstream integration, update the base version to the upstream version being tracked and retain the `-chunked` suffix. Record the exact upstream commit separately; the version label does not imply a build uses only the tagged release code.
+- After changing the server version, regenerate the OpenAPI document and TypeScript SDK with the pinned generators; their metadata headers embed the server version. Commit those generated changes alongside the version bump.
 - Version labels do not create additional container tags: continue publishing only `ghcr.io/nexryai/immich-server:latest`.
 
 ## Tracking upstream
