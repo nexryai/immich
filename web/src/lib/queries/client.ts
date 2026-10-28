@@ -81,6 +81,11 @@ const createQueryClient = () => {
     }),
   });
 
+  // Preloaded settings are read synchronously, including after memoized app init.
+  // Keep them available without observers; logout still removes private settings.
+  client.setQueryDefaults(['server', 'config'], { gcTime: Infinity });
+  client.setQueryDefaults(['config'], { gcTime: Infinity });
+
   const publicQueryHashes = new Set(
     [getServerConfigQuery(), getPublicConfigQuery()].map(({ queryKey }) => hashKey(queryKey)),
   );
